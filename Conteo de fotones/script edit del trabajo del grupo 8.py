@@ -168,6 +168,17 @@ data=Pantalla['screens']
 escala = 1.25 # microsegundos
 resolucion = escala/250*1e-6 # Consutla
 tiempo = np.arange(0, resolucion*(len(data)), resolucion)
+#%% HISTOGRAMA DE LOS DATOS CRUDOS (NO PICOS)
+
+plt.figure()
+plt.hist(data,bins=200)
+plt.grid(True)
+plt.legend()
+plt.xlabel('Alturas[mV]')
+plt.ylabel('Apariciones')    
+plt.title('Histograma de los datos')
+plt.yscale("log")
+# plt.ylim([100, 100000])
 
 #%%
 alturas = []
@@ -191,7 +202,7 @@ print(len(alturas))
 #%%
 
 plt.figure()
-plt.plot(tiempo, data)
+# plt.plot(tiempo, data)
 # plt.plot(tiempo[0:len(tiempo)]*1e6, data[0:len(tiempo)]*1e3)
 plt.plot(np.array(t_a[0:len(t_a)]), np.array(alturas[0:len(t_a)]), 'o', color = 'red')
 plt.title("Deteccion de picos")
@@ -200,23 +211,30 @@ plt.xlabel("Tiempo[us]")
 # plt.xlim([0, 4])
 # plt.ylim([-10, 2])
 plt.grid(True)
+
 #%% ALTURAS RECORTANDO LOS PICOS
 t = np.array(t_a[0:len(t_a)])
-peak = np.array(alturas[0:len(t_a)])*1e2
-# peak_cut_index = np.where(peak<-) 
-plt.plot(t,peak)
-#%% HISTOGRAMA DE LOS DATOS CRUDOS (NO PICOS)
-
-plt.figure()
-plt.hist(data*100,bins=200)
-plt.grid(True)
-plt.legend()
-plt.xlabel('Alturas[mV]')
-plt.ylabel('Apariciones')    
-plt.title('Histograma de los datos')
-plt.yscale("log")
-# plt.ylim([100, 100000])
-
+peak = np.array(alturas[0:len(t_a)])
+peak_cut_index = np.where(peak<-0.00207) 
+plt.plo(t[peak_cut_index],peak[peak_cut_index])
+#%% HISTOGRAMA DE PICOS RECORTADOS
+plt.figure(1,figsize=(8,6))
+plt.clf()
+plt.rc('font', family='serif', size=13)
+fig, ax = plt.subplots(1,1,num=1, sharex=True)
+# 1 Muestro la referencia.
+a = ax.hist(peak[peak_cut_index] ,bins = 70, label='Histograma')
+ax.set_xlabel("Alturas [mV]")
+ax.set_ylabel("Apariciones")
+ax.ticklabel_format(axis='y',style='sci',scilimits=(1,4))
+ax.set_title('Histograma de datos crudos')
+# ax.set_yscale('log')
+ax.legend()
+ax.grid(True)
+# Ordenamos y salvamos la figura.
+plt.tight_layout()
+plt.show()  
+plt.savefig('Histograma de cuentas apagadas.png')
 #%%
 mediciones = np.array(alturas)*1e3
 # mediciones = data*1e3
