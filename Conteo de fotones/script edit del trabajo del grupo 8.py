@@ -166,27 +166,38 @@ def busca_Tc(paso, correlacion):
 
 corr_calc = busca_Tc(paso, Corre)
 print(f'La correlacion es: {corr_calc}')
+# %% CUENTAS DE OSCURIDAD
 
+os.chdir('D:\Documentos\Documentos-facultad\Labo 5\Laboratorio-5\Conteo de fotones\Dia 3\Grupo v3')
+
+Pantalla = np.load(r'1000 pantallas 500 ns 10mv .npz')['screens']
+Pantalla1 = np.load(r'1000 pantallas 500 ns 10mv (2).npz')['screens']
+Pantalla = np.concatenate((Pantalla, Pantalla1))
+# for item in Pantalla.keys():
+#     print(item)
+
+# for item in Pantalla.values():
+#     print(item)
 
 # %% CARGA DE DATOS PARA DETERMINAR NUMERO DE PICOS
 
 
-os.chdir('D:\Documentos\Documentos-facultad\Labo 5\Laboratorio-5\Conteo de fotones\Dia 3\Grupo v3')
+# os.chdir('D:\Documentos\Documentos-facultad\Labo 5\Laboratorio-5\Conteo de fotones\Dia 3\Grupo v3')
 
-Pantalla = np.load(r'1000 pantallas 500 ns 10mv (2).npz')
+# Pantalla = np.load(r'1000 pantallas 1 us 10mv (2).npz')
 
-for item in Pantalla.keys():
-    print(item)
+# for item in Pantalla.keys():
+#     print(item)
 
-for item in Pantalla.values():
-    print(item)
+# for item in Pantalla.values():
+#     print(item)
 
-np.savetxt('datos_analisis ultiom0.csv', np.array(
-    Pantalla['screens']), delimiter=',')
+# # np.savetxt('datos_analisis ultiom0.csv', np.array(
+# #     Pantalla['screens']), delimiter=',')
 
 # %% PRINT DE DATOS CRUDOS
 
-Pantalla = Pantalla['screens']
+# Pantalla = Pantalla['screens']
 plt.plot(range(len(Pantalla)), Pantalla)
 plt.title("Pulso")
 plt.ylabel("Voltaje[V]")
@@ -215,8 +226,8 @@ plt.savefig('Histograma de los datos crudos')
 # %% CONFIGURACION DE ESCALAS DEMASES
 
 data = Pantalla
-escala = 1  # microsegundos
-resolucion = escala/250*1e-6  # Consutla
+escala = 0.5  # microsegundos
+resolucion = (escala/250)*1e-6  # Consutla
 tiempo = np.arange(0, resolucion*(len(data)), resolucion)
 
 # %% BUSQUEDA DE PICOS
@@ -297,9 +308,9 @@ hist, bins = np.histogram(
 bins = bins[:-1]
 
 # Generamos una figura
-plt.figure(1, figsize=(10, 6))
+plt.figure(1, figsize=(8, 5))
 plt.clf()
-plt.rc('font', family='serif', size=13)
+plt.rc('font', family='serif', size=14)
 fig, ax = plt.subplots(2, 1, num=1, sharex=True)
 # PICOS CON EL UMBRAL
 
@@ -313,8 +324,9 @@ ax[0].plot(np.array(alturas[0:len(t_a)])[1250:2500],
 ax[0].vlines(-0.003, np.array(t_a[0:len(t_a)])[1250:2500].min(),
              np.array(t_a[0:len(t_a)])[1250:2500].max(), ls="--", label='Threshold', color='green')
 ax[0].ticklabel_format(axis='y', style='sci', scilimits=(1, 4))
+ax[0].ticklabel_format(axis='x', style='sci', scilimits=(1, 4))
 ax[0].set_xlim(-0.021324655172413793, 0)
-ax[0].set_ylabel('Tiempo [$\mu s$]', fontsize=13)
+ax[0].set_ylabel('Tiempo [$\mu s$]', fontsize=14)
 ax[0].grid(True)
 ax[0].legend()
 ax[0].set_title('Histograma de picos', fontsize=16)
@@ -322,12 +334,12 @@ ax[0].set_title('Histograma de picos', fontsize=16)
 # 2HISTOGRAMA
 
 ax[1].bar(bins, hist, width=0.0003, label='Datos')
-ax[1].set_ylabel('Apariciones', fontsize=13), ax[1].grid(True)
+ax[1].set_ylabel('Apariciones', fontsize=14), ax[1].grid(True)
 ax[1].set_yscale('log')
 
 # ax[1].set_ylim(100)
 
-ax[1].set_xlabel('Alturas[mV]', fontsize=13)
+ax[1].set_xlabel('Alturas[mV]', fontsize=14)
 ax[1].vlines(-0.003, 100, 1000000, ls="--",
              label='Threshold', color='green'), ax[1].legend()
 
@@ -412,7 +424,7 @@ tiene las apariciones de picos en cada ventana.
 
 N1 = []
 
-fraccion = 7
+fraccion = 20
 umbral1 = 0.003  # medio a ojo
 distancia = 5
 frac_de_ventanas = 1
@@ -439,8 +451,7 @@ bins = np.arange(-0.5, 15.5, 1)
 plt.figure()
 bose_data = plt.hist(N1, bins, color='#0504aa', alpha=0.7,
                      rwidth=0.85, label='Mediciones')
-# plt.plot(Torres, P_plot2*Mod, 'o', markersize = 10, color = 'red', label = 'Ajuste Poissoniano')
-# plt.plot(Torres, P_plot1*Mod, 'o', markersize = 10, color = 'black', label = 'Ajuste BE')
+plt.xlim(-1, 6)
 plt.grid(True)
 plt.legend()
 plt.xlabel('Número de fotocuentas')
@@ -449,23 +460,19 @@ plt.title('Histograma - ventana: 1us')
 
 # %% AJUSTE DE BE
 y_index = np.where(bose_data[0] != 0)
-y = np.array(bose_data[0][y_index])[:6]
+y = np.array(bose_data[0][y_index])[:4]
 
-x = np.array(range(len(bose_data[0][y_index])))[:6]
+x = np.array(range(len(bose_data[0][y_index])))[:4]
 
 parametros_optimos, matriz_de_cov = curve_fit(
     BE, x, y, sigma=np.sqrt(y), p0=[1, 3000])
 error = np.sqrt(np.diag(matriz_de_cov))
-X = np.linspace(x.min(), x.max(), 1000)
-
 
 plt.errorbar(x, y, yerr=np.sqrt(y), fmt='+', label='Datos')
 plt.plot(x, BE(x, *parametros_optimos), ".", label='Ajuste')
 plt.yscale('log')
 print(f' Parametros = {parametros_optimos}\n errores={error}')
-
-# %%
-
+plt.title('Ajuste Bose-Einstein')
 # Analisis del estadistico χ²
 # esto es: grados de libertad = #mediciones - #Parámetros - 1
 grados_lib = len(y) - len(parametros_optimos)-1
@@ -486,21 +493,47 @@ else:
 # %%
 
 y_index = np.where(bose_data[0] != 0)
-y = np.array(bose_data[0][y_index])[:4]
+y = np.array(bose_data[0][y_index])[:5]
 
-x = np.array(range(len(bose_data[0][y_index])))[:4]
+x = np.array(range(len(bose_data[0][y_index])))[:5]
 
 parametros_optimos, matriz_de_cov = curve_fit(
     poiss1, x, y, p0=[1.5, 4000])
 error = np.sqrt(np.diag(matriz_de_cov))
+fig = plt.figure(figsize=(8, 5))
+ax = fig.add_subplot()
+# ax.plot(x1,y1,".",label='Datos')
+ax.errorbar(x, y, yerr=np.sqrt(y), fmt='+', label='Datos')
+# plt.rcParams['axes.facecolor'] = '#f6f6f6'
+# fig.set_facecolor('#f6f6f6')
 
-plt.errorbar(x, y, yerr=np.sqrt(y), fmt='+', label='Datos')
-plt.plot(x, poiss1(x, *parametros_optimos), ".", label='Ajuste')
-plt.yscale('log')
+ax.plot(x, poiss1(x, *parametros_optimos), ".", label='Ajuste')
+
+# plt.plot( np.linspace(x.min(),x.max(),100),f(np.linspace(x.min(),x.max(),100),*params))
+
+ax.set_title("Ajuste Poisson", fontsize=18)
+ax.ticklabel_format(axis='x', style='sci', scilimits=(1, 4))
+
+ax.set_xlabel('Numero de fotocuentas', fontsize=15)
+ax.set_ylabel('Apariciones', fontsize=15)
+# ax.xticks(fontsize=13)
+# ax.yticks(fontsize=13)
+# ax.legend(fontsize=15)
+# ax.grid(True)
+# ax.set_xscale('log')
+# plt.yscale('log')
 plt.legend()
+plt.tight_layout()
+plt.subplots_adjust(bottom=0.114, left=0.124, right=0.996, top=0.936)
+plt.show()
+# plt.savefig('ajuste BE.png')
+# plt.errorbar(x, y, yerr=np.sqrt(y), fmt='+', label='Datos')
+# plt.plot(x, poiss1(x, *parametros_optimos), ".", label='Ajuste')
+# plt.yscale('log')
+# plt.legend()
 print(f' Parametros = {parametros_optimos}\n errores={error}')
 
-# %% ANALISIS DIST DE POISSON
+#  ANALISIS DIST DE POISSON
 
 # Analisis del estadistico χ²
 # esto es: grados de libertad = #mediciones - #Parámetros - 1
@@ -527,6 +560,8 @@ else:
 
 
 # %%
+
+
 mediciones = np.array(alturas)
 # mediciones = data*1e3
 DV = 0.08
@@ -749,23 +784,6 @@ plt.xlabel('Tiempo [s]')
 plt.ylabel('Correlacion')
 plt.title('Autocorrelacion')
 
-# %% Busca Tc, busca el ancho a mitad de altura
-
-
-def busca_Tc(paso, correlacion):
-    L = len(correlacion)
-    M = max(correlacion)
-    for i in range(L):
-        if correlacion[i] > M/2:
-            i1 = i
-            break
-    for i in range(L):
-        if correlacion[-i] > M/2:
-            i2 = L - i + 1
-            break
-    Tc = (i2 - i1)*paso
-    return Tc
-
 
 # %%
 corr_calc = busca_Tc(paso, Corre)
@@ -788,45 +806,6 @@ print('Tc = ({:4.2f} ± {:4.2f})s'.format(np.mean(Tcs)*1000, np.std(Tcs)*1000))
 
 
 # %%
-Torres00 = np.arange(-0.76, 1.32, DV)
-Torres0 = np.zeros(len(Torres00))
-for k, element in enumerate(Torres00):
-    Torres0[k] = np.round(element, 5)
-
-Cuentas0 = np.zeros(len(Torres0))
-
-for lugar, voltaje in enumerate(Torres0):
-    for element in mediciones:
-        if voltaje - DV < element <= voltaje + DV:
-            Cuentas0[lugar] += 1
-# %% Para ver si cuenta bien
-
-plt.figure()
-plt.plot(Torres0, Cuentas0, '.')
-# plt.yscale("log")
-plt.grid(True)
-
-# %%
-parametros1 = la_ajustadora(gauss, Torres0, Cuentas0, None, [
-                            1000, 0.1, 0.1], ["a", 'b', "c"])
-a0 = parametros1["Valor"]["a"]
-b0 = parametros1["Valor"]["b"]
-c0 = parametros1["Valor"]["c"]
-
-r_plot = np.linspace(-5.2, 5.2, 1000)
-P_plot = gauss(r_plot, a0, b0, c0)
-
-plt.figure()
-plt.plot(Torres0, Cuentas0, 'o', label='Mediciones')
-plt.plot(r_plot, P_plot, label='Ajuste Gaussiano')
-plt.grid(True)
-plt.legend()
-plt.xlabel('Voltaje [mV]')
-plt.ylabel('Cantidad')
-plt.title('Ruido electrico')
-# plt.yscale('log')
-plt.ylim([10, 700000])
-# %%
 
 
 # os.chdir('D:/Documentos/Documentos-facultad/Labo 5/Laboratorio-5/Conteo de fotones/Dia 3/Grupo v3/Nuevo analisis')
@@ -840,7 +819,7 @@ plt.ylim([10, 700000])
 # # Listar mediciones
 
 # data0 = np.loadtxt(mediciones[0], delimiter=',')
-# %%
+# %% ADAPTACION DEL SCRIPT DEL GITHUB DE LA MATERIA
 
 os.chdir('D:\Documentos\Documentos-facultad\Labo 5\Laboratorio-5\Conteo de fotones\Dia 3\Grupo v3')
 
