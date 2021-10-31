@@ -166,52 +166,163 @@ def busca_Tc(paso, correlacion):
 
 corr_calc = busca_Tc(paso, Corre)
 print(f'La correlacion es: {corr_calc}')
-# %% CUENTAS DE OSCURIDAD
 
-os.chdir('D:\Documentos\Documentos-facultad\Labo 5\Laboratorio-5\Conteo de fotones\Dia 3\Grupo v3')
-
-Pantalla = np.load(r'1000 pantallas 500 ns 10mv .npz')['screens']
-Pantalla1 = np.load(r'1000 pantallas 500 ns 10mv (2).npz')['screens']
-Pantalla = np.concatenate((Pantalla, Pantalla1))
-# for item in Pantalla.keys():
-#     print(item)
-
-# for item in Pantalla.values():
-#     print(item)
-
-# %% CARGA DE DATOS PARA DETERMINAR NUMERO DE PICOS
-
-
-# os.chdir('D:\Documentos\Documentos-facultad\Labo 5\Laboratorio-5\Conteo de fotones\Dia 3\Grupo v3')
-
-# Pantalla = np.load(r'1000 pantallas 1 us 10mv (2).npz')
-
-# for item in Pantalla.keys():
-#     print(item)
-
-# for item in Pantalla.values():
-#     print(item)
-
-# # np.savetxt('datos_analisis ultiom0.csv', np.array(
-# #     Pantalla['screens']), delimiter=',')
-
+# %% ANALISIS DE CUENTAS APAGADAS
+Pantalla_osc = np.load(r'1000 ventanas apagado 10mv 1us.npz')['screens']
 # %% PRINT DE DATOS CRUDOS
 
-# Pantalla = Pantalla['screens']
-plt.plot(range(len(Pantalla)), Pantalla)
-plt.title("Pulso")
-plt.ylabel("Voltaje[V]")
-plt.xlabel("Tiempo[s]")
-# plt.xlim([0,0.010])
+# # Pantalla = Pantalla['screens']
+# plt.plot(range(len(Pantalla_osc)), Pantalla_osc)
+# plt.title("Pulso")
+# plt.ylabel("Voltaje[V]")
+# plt.xlabel("Tiempo[s]")
+# # plt.xlim([0,0.010])
+# plt.grid(True)
+
+# %% HISTOGRAMA DE LOS DATOS  DE CUENTAS APGADAS
+# plt.figure(1, figsize=(8, 6))
+# plt.clf()
+# plt.rc('font', family='serif', size=13)
+# fig, ax = plt.subplots(1, 1, num=1, sharex=True)
+# # 1 Muestro la referencia.
+# a = ax.hist(Pantalla_osc, bins=200, label='Histograma')
+# ax.set_xlabel("Alturas [mV]")
+# ax.set_ylabel("Apariciones")
+# ax.ticklabel_format(axis='y', style='sci', scilimits=(1, 4))
+# ax.set_title('Histograma de datos crudos')
+# ax.set_yscale('log')
+# ax.legend()
+# ax.grid(True)
+# # Ordenamos y salvamos la figura.
+# plt.tight_layout()
+# plt.show()
+# plt.savefig('Histograma de lCuentas oscuras.png')
+# %%
+
+data = Pantalla_osc
+escala = 1  # microsegundos
+resolucion = (escala/250)*1e-6  # Consutla
+tiempo = np.arange(0, resolucion*(len(data)), resolucion)
+
+# %% BUSQUEDA DE PICOS
+
+alturas_osc = []
+t_a = []
+delta = 5  # numero de puntos que fijamos por pico
+
+ubi_picos1 = busca_picos(-data, delta, 0.0000001)
+ubi_picos2 = busca_picos(data, delta, 0.0000001)
+
+for index in ubi_picos1:
+    alturas_osc.append(data[index])
+    t_a.append(tiempo[index])
+
+for index in ubi_picos2:
+    alturas_osc.append(data[index])
+    t_a.append(tiempo[index])
+
+alturas_osc = np.array(alturas_osc)
+print(len(alturas_osc))
+
+# %% VERIFICACION DE LA DETECCION DE PICOS
+
+plt.figure()
+plt.plot(tiempo, data)
+# plt.plot(tiempo[0:len(tiempo)]*1e6, data[0:len(tiempo)]*1e3)
+plt.plot(np.array(t_a[0:len(t_a)]), np.array(
+    alturas_osc[0:len(t_a)]), '.', color='red')
+plt.title("Deteccion de picos")
+plt.ylabel("Voltaje[mV]")
+plt.xlabel("Tiempo[us]")
 plt.grid(True)
 
-# %% HISTOGRAMA DE LOS DATOS CRUDOS
+# %% HISTOGRAMA DE LOS PICOS DE CUENTAS OSCURAS
+### Histograma ###
+alturas_osc = np.array(alturas_osc[0:len(t_a)])  # consultar esto
+index_peaks_restric = np.where(alturas_osc > -0.02)
+
+plt.figure(figsize=(10, 6))
+# (2 + 3*np.log2(len(alturas_osc))) # fijado para que se solape
+cantidad_de_bins = 61
+# con el histograma de cuentas prendidas
+maxim = 0.0056  # alturas_osc[index_peaks_restric].max()
+lista_bins = np.linspace(-0.02,
+                         maxim, int(cantidad_de_bins))
+hist_osc, bins = np.histogram(
+    alturas_osc[index_peaks_restric], bins=lista_bins, density=False)
+bins_osc = bins[:-1]
+###
+plt.bar(bins_osc, hist_osc, width=0.0003, label='Datos')
+plt.ticklabel_format(axis='x', style='sci', scilimits=(1, 4))
+plt.yscale('log')
+# Configuración
+plt.grid()
+### Ejes ###
+plt.axis('tight')
+# plt.xlim((-1, 10))
+# plt.ylim((0, 0.25))
+plt.xlabel('Numero de eventos', fontsize=22)
+plt.ylabel('Frecuencias relativas', fontsize=22)
+plt.tick_params(labelsize=20)
+
+###
+plt.legend(loc=0, fontsize=20)
+plt.savefig('histograma.png', bbox_inches='tight')
+
+
+# %%
+'''Para que el histograma se vea mas agradable a la vista, voy a 
+sacar del grafico los puntos que son menores auqe -0.07v aunque los
+voy a seguir considerando para el analisis'''
+alturas_osc = np.array(alturas_osc[0:len(t_a)])  # consultar esto
+
+index_peaks_restric = np.where(alturas_osc > -0.02)
 plt.figure(1, figsize=(8, 6))
 plt.clf()
 plt.rc('font', family='serif', size=13)
 fig, ax = plt.subplots(1, 1, num=1, sharex=True)
 # 1 Muestro la referencia.
-a = ax.hist(Pantalla, bins=200, label='Histograma')
+values = ax.hist(alturas_osc[index_peaks_restric],
+                 bins=125, label='Histograma')
+# sns.histplot(x=alturas_osc)
+ax.set_xlabel("alturas [mV]")
+ax.set_ylabel("Apariciones")
+ax.ticklabel_format(axis='y', style='sci', scilimits=(1, 4))
+ax.set_title('Histograma de los picos')
+ax.set_yscale('log')
+ax.legend()
+ax.grid(True)
+# Ordenamos y salvamos la figura.
+plt.tight_layout()
+plt.show()
+plt.savefig('Histograma de los picos.png')
+
+# %% ALTURAS RECORTANDO LOS PICOS
+
+'''Aca añado una parte en particular para considerar el error, voy a calcular 
+el histograma de el threshold + el error instrumental y - el error instrumental
+y voy a tomar como error la diferencia entre ambos'''
+threshold = -0.003
+res_volt = 10e-3/250  # en volts
+t = np.array(t_a[0:len(t_a)])
+peak = np.array(alturas_osc[0:len(t_a)])
+peak_cut_index = np.where(peak < threshold)
+peak_cut_index_sup = np.where(peak < threshold + res_volt)
+peak_cut_index_inf = np.where(peak < threshold - res_volt)
+plt.plot(t[peak_cut_index], peak[peak_cut_index])
+
+# %% HISTOGRAMA DE PICOS RECORTADOS
+
+final_peaks = peak[peak_cut_index]
+index_final_peaks_restric = np.where(final_peaks > -0.02)
+
+plt.figure(1, figsize=(8, 6))
+plt.clf()
+plt.rc('font', family='serif', size=13)
+fig, ax = plt.subplots(1, 1, num=1, sharex=True)
+# 1 Muestro la referencia.- 75 BINS PARA EL HISTOGRAMA DE 1 US
+a = ax.hist(final_peaks[index_final_peaks_restric],
+            bins=83, label='Histograma')
 ax.set_xlabel("Alturas [mV]")
 ax.set_ylabel("Apariciones")
 ax.ticklabel_format(axis='y', style='sci', scilimits=(1, 4))
@@ -222,7 +333,52 @@ ax.grid(True)
 # Ordenamos y salvamos la figura.
 plt.tight_layout()
 plt.show()
-plt.savefig('Histograma de los datos crudos')
+plt.savefig('Histograma de cuentas apagadas.png')
+# %% ANALISIS CON LASER PRENDIDO
+
+os.chdir('D:\Documentos\Documentos-facultad\Labo 5\Laboratorio-5\Conteo de fotones\Dia 3\Grupo v3')
+
+# Pantalla = np.load(r'1000 pantallas 500 ns 10mv .npz')['screens'] # 500 ns
+# Pantalla1 = np.load(r'1000 pantallas 500 ns 10mv (2).npz')['screens']
+
+Pantalla = np.load(r'1000 pantallas 500 ns 10mv .npz')['screens']  # 1us
+Pantalla1 = np.load(r'1000 pantallas 500 ns 10mv (2).npz')['screens']
+Pantalla = np.concatenate((Pantalla, Pantalla1))
+# for item in Pantalla.keys():
+#     print(item)
+
+# for item in Pantalla.values():
+#     print(item)
+
+
+# %% PRINT DE DATOS CRUDOS
+
+# # Pantalla = Pantalla['screens']
+# plt.plot(range(len(Pantalla)), Pantalla)
+# plt.title("Pulso")
+# plt.ylabel("Voltaje[V]")
+# plt.xlabel("Tiempo[s]")
+# # plt.xlim([0,0.010])
+# plt.grid(True)
+
+# %% HISTOGRAMA DE LOS DATOS CRUDOS
+# plt.figure(1, figsize=(8, 6))
+# plt.clf()
+# plt.rc('font', family='serif', size=13)
+# fig, ax = plt.subplots(1, 1, num=1, sharex=True)
+# # 1 Muestro la referencia.
+# a = ax.hist(Pantalla, bins=200, label='Histograma')
+# ax.set_xlabel("Alturas [mV]")
+# ax.set_ylabel("Apariciones")
+# ax.ticklabel_format(axis='y', style='sci', scilimits=(1, 4))
+# ax.set_title('Histograma de datos crudos')
+# ax.set_yscale('log')
+# ax.legend()
+# ax.grid(True)
+# # Ordenamos y salvamos la figura.
+# plt.tight_layout()
+# plt.show()
+# plt.savefig('Histograma de los datos crudos')
 # %% CONFIGURACION DE ESCALAS DEMASES
 
 data = Pantalla
@@ -263,7 +419,7 @@ plt.xlabel("Tiempo[us]")
 plt.grid(True)
 
 # %% HISTOGRAMA DE LOS PICOS
-# %%
+
 ### Histograma ###
 alturas = np.array(alturas[0:len(t_a)])  # consultar esto
 index_peaks_restric = np.where(alturas > -0.02)
@@ -276,7 +432,14 @@ hist, bins = np.histogram(
     alturas[index_peaks_restric], bins=lista_bins, density=False)
 bins = bins[:-1]
 ###
-plt.bar(bins, hist, width=0.0003, label='Datos')
+plt.bar(bins, hist, width=0.0003, label='Cuentas prendidas ')
+plt.bar(bins_osc, hist_osc, width=0.0003, label='Cuentas apagadas')
+plt.annotate("Umbral",
+             xy=(-0.003, 500),
+             xytext=(-0.0042, 10000),
+             # xycoords="figure points",
+             arrowprops=dict(arrowstyle='- |>', color="r"))
+plt.title("Caracterizacion del umbral", fontsize=22)
 plt.yscale('log')
 # Configuración
 plt.grid()
@@ -284,14 +447,15 @@ plt.grid()
 plt.axis('tight')
 # plt.xlim((-1, 10))
 # plt.ylim((0, 0.25))
-plt.xlabel('Numero de eventos', fontsize=22)
-plt.ylabel('Frecuencias relativas', fontsize=22)
+plt.xlabel('Alturas [mV]', fontsize=22)
+plt.ylabel('Ocurrencias', fontsize=22)
 plt.tick_params(labelsize=20)
-
+plt.tight_layout()
 ###
-plt.legend(loc=0, fontsize=20)
-plt.savefig('histograma.png', bbox_inches='tight')
-# %%
+plt.legend(loc=0, fontsize=17)
+plt.show()
+plt.savefig('Caracterizacion del umbral.png', bbox_inches='tight')
+
 # %% VERSION 2.0 DEL GRAFICO PARA QUE SE PUEDA VER DONDE CORTA
 # EL UMBRAL CON LOS PICOS GENERADOS POR LOS FOTONES
 
@@ -321,8 +485,8 @@ ax[0].plot(np.array(alturas[0:len(t_a)])[1250:2500],
 
 # ax[0].plot(data[0:len(t_a)][1250:2500],tiempo[0:len(t_a)][1250:2500],linewidth=0.5,label='Recorte de medición')
 
-ax[0].vlines(-0.003, np.array(t_a[0:len(t_a)])[1250:2500].min(),
-             np.array(t_a[0:len(t_a)])[1250:2500].max(), ls="--", label='Threshold', color='green')
+ax[0].vlines(-0.0029354999999999997, np.array(t_a[0:len(t_a)])[1250:2500].min(),
+             np.array(t_a[0:len(t_a)])[1250:2500].max(), ls="--", label='Umbral', color='green', linewidth=3)
 ax[0].ticklabel_format(axis='y', style='sci', scilimits=(1, 4))
 ax[0].ticklabel_format(axis='x', style='sci', scilimits=(1, 4))
 ax[0].set_xlim(-0.021324655172413793, 0)
@@ -336,12 +500,18 @@ ax[0].set_title('Histograma de picos', fontsize=16)
 ax[1].bar(bins, hist, width=0.0003, label='Datos')
 ax[1].set_ylabel('Apariciones', fontsize=14), ax[1].grid(True)
 ax[1].set_yscale('log')
+ax[1].bar(bins_osc, hist_osc, width=0.0003, label='Cuentas apagadas')
+# ax[1].annotate("Umbral",
+#                 xy=(-0.003, 500),
+#                 xytext=(-0.0042, 10000),
+#                 # xycoords="figure points",
+#                 arrowprops=dict(arrowstyle='- |>', color="r"))
 
 # ax[1].set_ylim(100)
 
 ax[1].set_xlabel('Alturas[mV]', fontsize=14)
-ax[1].vlines(-0.003, 100, 1000000, ls="--",
-             label='Threshold', color='green'), ax[1].legend()
+ax[1].vlines(-0.0029354999999999997, 100, 1000000, ls="--",
+             label='Umbral', color='green', linewidth=3), ax[1].legend()
 
 # Ordenamos y salvamos la figura.
 plt.tight_layout()
