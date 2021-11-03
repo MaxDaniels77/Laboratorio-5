@@ -62,6 +62,10 @@ def la_real(x, x1, A, B):
     return (A*poisson.pmf(x, x1) + ((1-A)*x1**x)/(1 + x1)**(1 + x))*B
 
 
+def linealizacion(x, A):
+    return x*np.log(A)
+
+
 def busca_picos(Intensidades, delta, umbral):
     """
     Parameters
@@ -88,23 +92,26 @@ def busca_picos(Intensidades, delta, umbral):
 
 
 # %% ARCHIVO QUE SE USO PARA DETERMINAR LA CANTIDAD DE PUNTOS POR PICO (SE FIJO ARBITRARIAMENTE EN 5)
+
 prelim = np.loadtxt(
     r'D:/Documentos/Documentos-facultad/Labo 5/Laboratorio-5/Conteo de fotones/Grupo 3v/data_preliminar_100ohm 25ns.txt', delimiter=',')
-plt.figure(1, figsize=(10, 6))
+
+plt.figure(1, figsize=(8, 5))
 plt.clf()
-plt.rc('font', family='serif', size=13)
+plt.rc('font', family='serif', size=14)
 fig, ax = plt.subplots(1, 1, num=1, sharex=True)
 # 1 Muestro la referencia.
-ax.plot(prelim[0], prelim[1], label='Osc. screen')
-ax.set_xlabel("Tiempo[s]")
-ax.set_ylabel("Voltaje[V]")
+ax.plot(prelim[0], prelim[1])
+ax.set_xlabel("Tiempo[s]", fontsize=18)
+ax.set_ylabel("Voltaje[V]", fontsize=18)
 ax.ticklabel_format(axis='y', style='sci', scilimits=(1, 4))
-ax.set_title('Pulso 25 ns')
+ax.set_title('Pulso 25 ns', fontsize=20)
 ax.legend(loc='lower right')
 ax.grid(True)
 ax.set_xlim(prelim[0].min(), prelim[0].max())
 # Ordenamos y salvamos la figura.
-plt.tight_layout()
+# plt.tight_layout()
+plt.subplots_adjust(bottom=0.124, left=0.129, right=0.996, top=0.921)
 plt.show()
 plt.savefig('pulso 25 ns.png')
 
@@ -128,6 +135,18 @@ plt.grid(True)
 plt.xlabel('Tiempo [s]')
 plt.ylabel('Voltaje [V]')
 plt.title("Pantalla")
+# %% SUAVIZADO PARA MEJORAR LA ESTIMACION
+
+
+def smooth(y, box_pts):
+    box = np.ones(box_pts)/box_pts
+    y_smooth = np.convolve(y, box, mode='same')
+    return y_smooth
+
+
+plt.plot(t, d, ".")
+plt.plot(t, smooth(d, 2), 'r-', lw=2)
+plt.plot(t, smooth(d, 19), 'g-', lw=2)
 
 # %% PLOTEO DE LA CORRELACION
 
@@ -138,12 +157,31 @@ print(len(Corre))
 
 paso = t[1]-t[0]
 ti_c = np.linspace(-t[-1], t[-1], len(t)*2-1)
-plt.plot(ti_c, Corre)
-plt.grid(True)
-plt.xlabel('Tiempo [s]')
-plt.ylabel('Correlacion')
-plt.title('Autocorrelacion')
+# plt.plot(ti_c, Corre)
 
+
+def smooth(y, box_pts):
+    box = np.ones(box_pts)/box_pts
+    y_smooth = np.convolve(y, box, mode='same')
+    return y_smooth
+
+
+plt.rc('font', family='serif', size=14)
+plt.figure(1, figsize=(8, 5))
+# plt.plot(ti_c, Corre,".")
+plt.plot(ti_c, smooth(Corre, 2), '.', lw=2)
+# plt.plot(ti_c, smooth(Corre,19), 'g-', lw=2)
+plt.xlim(-0.02, 0.02)
+plt.ticklabel_format(axis='x', style='sci', scilimits=(1, 4))
+
+plt.grid(True)
+
+plt.xlabel('Tiempo [s]', fontsize=18)
+plt.ylabel('Correlacion', fontsize=18)
+plt.title('Autocorrelacion', fontsize=20)
+plt.subplots_adjust(bottom=0.119, left=0.104, right=0.976, top=0.921)
+plt.show()
+plt.savefig('Correlacion.png')
 # %% DETERMINACION DEL TIEMPO DE CORRELACION
 '''FALTA CORREGIR'''
 # Busca Tc, busca el ancho a mitad de altura
@@ -406,7 +444,6 @@ print(len(alturas))
 
 plt.figure()
 plt.plot(tiempo, data)
-# plt.plot(tiempo[0:len(tiempo)]*1e6, data[0:len(tiempo)]*1e3)
 plt.plot(np.array(t_a[0:len(t_a)]), np.array(
     alturas[0:len(t_a)]), '.', color='red')
 plt.title("Deteccion de picos")
@@ -494,9 +531,9 @@ ax[0].set_title('Histograma de picos', fontsize=20)
 # 2HISTOGRAMA
 
 ax[1].bar(bins, hist, width=0.0003, label='Datos')
-ax[1].set_ylabel('Apariciones', fontsize=18), ax[1].grid(True)
+ax[1].set_ylabel('Ocurrencias', fontsize=18), ax[1].grid(True)
 ax[1].set_yscale('log')
-ax[1].bar(bins_osc, hist_osc, width=0.0003, label='Cuentas apagadas')
+ax[1].bar(bins_osc, hist_osc, width=0.0003, label='Cuentas oscuras')
 # ax[1].annotate("Umbral",
 #                 xy=(-0.003, 500),
 #                 xytext=(-0.0042, 10000),
@@ -505,12 +542,14 @@ ax[1].bar(bins_osc, hist_osc, width=0.0003, label='Cuentas apagadas')
 
 # ax[1].set_ylim(100)
 # ax[1].ticklabel_format(axis='y', style='sci', scilimits=(1, 5))
-ax[1].set_xlabel('Alturas[mV]', fontsize=18)
+ax[1].set_xlabel('Voltaje [V]', fontsize=18)
 ax[1].vlines(-0.0029354999999999997, 100, 1000000, ls="--",
              label='Umbral', color='green', linewidth=3), ax[1].legend()
 
 # Ordenamos y salvamos la figura.
-plt.tight_layout()
+
+plt.subplots_adjust(bottom=0.094, left=0.079, right=0.975, top=0.941)
+
 plt.show()
 plt.savefig('histograma edit propio.png')
 
@@ -613,7 +652,7 @@ for i in range(Tt):
 
 final_peaks = peak[peak_cut_index]
 index_final_peaks_restric = np.where(final_peaks > -0.02)
-
+# plt.rcParams['text.usetex'] = False
 plt.figure(1, figsize=(8, 4))
 plt.clf()
 plt.rc('font', family='serif', size=13)
@@ -625,7 +664,7 @@ bose_data = ax.hist(N1, bins, color='#0504aa', alpha=0.7,
 ax.set_xlabel("Número de fotocuentas", fontsize=18)
 ax.set_ylabel("Ocurrencias", fontsize=18)
 ax.ticklabel_format(axis='y', style='sci', scilimits=(1, 3))
-ax.set_title('Histograma de picos con $T = 0.5 ~us$', fontsize=20)
+ax.set_title('Histograma de picos con $  \\tau = 1~ \\mu s$', fontsize=20)
 ax.set_xlim(-0.5, max(N1)+0.5)
 
 
@@ -639,7 +678,7 @@ plt.tight_layout()
 plt.subplots_adjust(bottom=0.154, left=0.087, right=0.996,
                     top=0.908)  # escaleo para 500ns
 plt.show()
-plt.savefig('Histograma de cuentas prendidas 0.5 us.png')
+plt.savefig('Histograma de cuentas prendidas 1 us.png')
 
 
 # %% AJUSTE DE BE
@@ -649,7 +688,7 @@ y = np.array(bose_data[0][y_index])[:]
 x = np.array(range(len(bose_data[0][y_index])))[:]
 
 parametros_optimos, matriz_de_cov = curve_fit(
-    BE, x, y, sigma=np.sqrt(y), p0=[1, 3000])
+    BE, x, y, sigma=np.sqrt(y), p0=[0.32, 19000])
 error = np.sqrt(np.diag(matriz_de_cov))
 
 # plt.errorbar(x, y, yerr=np.sqrt(y), fmt='+', label='Datos')
@@ -665,7 +704,9 @@ plt.rc('font', family='serif', size=13)
 bins = np.arange(-0.5, 40.5, 1)
 fig, ax = plt.subplots(1, 1, num=1, sharex=True)
 ax.errorbar(x, y, yerr=np.sqrt(y), fmt='+', label='Datos $T = 0.5~\mu s$')
-ax.plot(x, BE(x, *parametros_optimos), "o", label='Ajuste')
+x_BE = x
+y_BE = BE(x, *parametros_optimos)
+ax.plot(x_BE, y_BE, "o", label='Ajuste')
 ax.set_xlabel("Número de fotocuentas", fontsize=18)
 ax.set_ylabel("Ocurrencias", fontsize=18)
 ax.ticklabel_format(axis='y', style='sci', scilimits=(1, 3))
@@ -685,7 +726,7 @@ plt.savefig('Ajuste BE log 0.5 us.png')
 # Analisis del estadistico χ²
 # esto es: grados de libertad = #mediciones - #Parámetros - 1
 grados_lib = len(y) - len(parametros_optimos)-1
-modelo = BE(x, *parametros_optimos)
+modelo = x_BE
 error_y = np.sqrt(y)
 chi_cuadrado = np.sum(((y - modelo) / error_y)**2)  # Cálculo del χ²
 # Cálculo de su p-valor asociado
@@ -707,7 +748,7 @@ y = np.array(bose_data[0][y_index])[:]
 x = np.array(range(len(bose_data[0][y_index])))[:]
 
 parametros_optimos, matriz_de_cov = curve_fit(
-    poiss1, x, y, p0=[1, 100])
+    poiss1, x, y, p0=[1, 19000])
 error = np.sqrt(np.diag(matriz_de_cov))
 fig = plt.figure(figsize=(8, 4))
 ax = fig.add_subplot()
@@ -715,8 +756,9 @@ ax = fig.add_subplot()
 ax.errorbar(x, y, yerr=np.sqrt(y), fmt='+', label='Datos')
 # plt.rcParams['axes.facecolor'] = '#f6f6f6'
 # fig.set_facecolor('#f6f6f6')
-
-ax.plot(x, poiss1(x, *parametros_optimos), ".", label='Ajuste')
+x_POI = x
+y_POI = poiss1(x, *parametros_optimos)
+ax.plot(x_POI, y_POI, ".", label='Ajuste')
 
 # plt.plot( np.linspace(x.min(),x.max(),100),f(np.linspace(x.min(),x.max(),100),*params))
 
@@ -776,21 +818,127 @@ y = np.array(bose_data[0][y_index])[:]
 x = np.array(range(len(bose_data[0][y_index])))[:]
 
 parametros_optimos, matriz_de_cov = curve_fit(
-    la_real, x, y, p0=[1.5, 1, 1500])
+    la_real, x, y, p0=[1.5, 0.32, 19000])
 error = np.sqrt(np.diag(matriz_de_cov))
 fig = plt.figure(figsize=(8, 4))
 ax = fig.add_subplot()
 # ax.plot(x1,y1,".",label='Datos')
 # ax.errorbar(x, y, yerr=np.sqrt(y), fmt='+', label='Datos')
+
 ax.errorbar(x, y, np.sqrt(y), fmt='+', label='Datos')
 
 # plt.rcParams['axes.facecolor'] = '#f6f6f6'
 # fig.set_facecolor('#f6f6f6')
-
-ax.plot(x, la_real(x, *parametros_optimos), ".", label='Ajuste')
+x_COMB = x
+y_COMB = la_real(x, *parametros_optimos)
+ax.plot(x_COMB, y_COMB, ".", label='Ajuste')
 
 
 ax.set_title("Ajuste Combinado", fontsize=20)
+ax.ticklabel_format(axis='Y', style='sci', scilimits=(1, 4))
+
+ax.set_xlabel('Numero de fotocuentas', fontsize=18)
+ax.set_ylabel('Apariciones', fontsize=18)
+# ax.xticks(fontsize=13)
+# ax.yticks(fontsize=13)
+# ax.legend(fontsize=15)
+ax.grid(True)
+# ax.set_yscale('log')
+plt.legend()
+plt.tight_layout()
+plt.subplots_adjust(bottom=0.144, left=0.099, right=0.996, top=0.921)
+plt.show()
+# plt.savefig('ajuste BE.png')
+# plt.errorbar(x, y, yerr=np.sqrt(y), fmt='+', label='Datos')
+# plt.plot(x, poiss1(x, *parametros_optimos), ".", label='Ajuste')
+plt.yscale('log')
+# plt.legend()
+plt.savefig('Ajuste combinado log 0.5 us.png')
+print(f' Parametros = {parametros_optimos}\n errores={error}')
+
+# Analisis del estadistico χ²
+# esto es: grados de libertad = #mediciones - #Parámetros - 1
+# necesito eliminar las columnas que son cero, ya que el error depende de la altura
+# del bin
+
+y_index = np.where(y != 0)
+y = y[y_index]
+x = x[y_index]
+
+grados_lib = len(y) - len(parametros_optimos) - 1
+modelo = y_COMB
+error_y = np.sqrt(y)
+chi_cuadrado = np.sum(((y - modelo) / error_y)**2)  # Cálculo del χ²
+# Cálculo de su p-valor asociado
+p_chi = 1 - chi2.cdf(chi_cuadrado, grados_lib)
+# Printeamos los resultados
+print(f"chi^2: {chi_cuadrado}")
+print(f"Grados de Libertad: {grados_lib}")
+print(f"p-valor del chi^2: {p_chi:.3g}")
+if p_chi < 0.05:
+    print("Se rechaza la hipótesis de que el modelo ajuste a los datos.\n")
+else:
+    print("No se rechaza la hipótesis de que el modelo ajuste a los datos.\n")
+
+# %% PLOTEO CONJUNTO DE LOS AJUSTES BE y POI JUNTO A LOS DATOS
+fig = plt.figure(figsize=(8, 4))
+ax = fig.add_subplot()
+# ax.plot(x1,y1,".",label='Datos')
+# ax.errorbar(x, y, yerr=np.sqrt(y), fmt='+', label='Datos')
+corte = 7
+ax.errorbar(x[:corte], y[:corte], np.sqrt(y)[:corte], fmt='+', label='Datos')
+
+# plt.rcParams['axes.facecolor'] = '#f6f6f6'
+# fig.set_facecolor('#f6f6f6')
+
+ax.plot(x_BE[:corte], y_BE[:corte], ".", label='Ajuste BE')
+ax.plot(x_POI[:corte], y_POI[:corte], ".", label='Ajuste Poisson')
+
+
+ax.set_title("Ajustes vs Datos", fontsize=20)
+ax.ticklabel_format(axis='Y', style='sci', scilimits=(1, 4))
+
+ax.set_xlabel('Numero de fotocuentas', fontsize=18)
+ax.set_ylabel('Ocurrencias', fontsize=18)
+# ax.xticks(fontsize=13)
+# ax.yticks(fontsize=13)
+# ax.legend(fontsize=15)
+ax.grid(True)
+ax.set_yscale('log')
+plt.legend()
+plt.tight_layout()
+plt.subplots_adjust(bottom=0.144, left=0.114, right=0.996, top=0.921)
+plt.show()
+# plt.savefig('ajuste BE.png')
+# plt.errorbar(x, y, yerr=np.sqrt(y), fmt='+', label='Datos')
+# plt.plot(x, poiss1(x, *parametros_optimos), ".", label='Ajuste')
+# plt.yscale('log')
+# plt.legend()
+plt.savefig('Ajustes BE y POI  0.5 us.png')
+# %% pseudo linealizacion
+
+y_index = np.where(bose_data[0] != 0)
+y = np.array(bose_data[0][y_index])[:]
+y = np.log(y)
+
+x = np.array(range(len(bose_data[0][y_index])))[:]
+
+parametros_optimos, matriz_de_cov = curve_fit(
+    linealizacion, x, y, p0=[1/2])
+error = np.sqrt(np.diag(matriz_de_cov))
+fig = plt.figure(figsize=(8, 4))
+ax = fig.add_subplot()
+# ax.plot(x1,y1,".",label='Datos')
+# ax.errorbar(x, y, yerr=np.sqrt(y), fmt='+', label='Datos')
+ax.errorbar(x, y, y*0.4, fmt='+', label='Datos')
+
+# plt.rcParams['axes.facecolor'] = '#f6f6f6'
+# fig.set_facecolor('#f6f6f6')
+
+ax.plot(x, linealizacion(x, *parametros_optimos), ".", label='Ajuste')
+
+
+ax.set_title("Ajuste linealizacion", fontsize=20)
 ax.ticklabel_format(axis='Y', style='sci', scilimits=(1, 4))
 
 ax.set_xlabel('Numero de fotocuentas', fontsize=18)
@@ -807,9 +955,9 @@ plt.show()
 # plt.savefig('ajuste BE.png')
 # plt.errorbar(x, y, yerr=np.sqrt(y), fmt='+', label='Datos')
 # plt.plot(x, poiss1(x, *parametros_optimos), ".", label='Ajuste')
-plt.yscale('log')
+# plt.yscale('log')
 # plt.legend()
-plt.savefig('Ajuste combinado log 0.5 us.png')
+plt.savefig('Ajuste linealizacion 0.5 us.png')
 print(f' Parametros = {parametros_optimos}\n errores={error}')
 
 # Analisis del estadistico χ²
@@ -821,8 +969,8 @@ y = y[y_index]
 x = x[y_index]
 
 grados_lib = len(y) - len(parametros_optimos) - 1
-modelo = la_real(x, *parametros_optimos)
-error_y = np.sqrt(y)
+modelo = linealizacion(x, *parametros_optimos)
+error_y = y*0.4  # np.sqrt(y)
 chi_cuadrado = np.sum(((y - modelo) / error_y)**2)  # Cálculo del χ²
 # Cálculo de su p-valor asociado
 p_chi = 1 - chi2.cdf(chi_cuadrado, grados_lib)
@@ -834,9 +982,6 @@ if p_chi < 0.05:
     print("Se rechaza la hipótesis de que el modelo ajuste a los datos.\n")
 else:
     print("No se rechaza la hipótesis de que el modelo ajuste a los datos.\n")
-
-
-# %%
 
 
 # mediciones = np.array(alturas)
