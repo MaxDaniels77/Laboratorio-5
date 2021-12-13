@@ -1,0 +1,15 @@
+import numpy as np
+from scipy import special
+
+
+def TEMXpq (x, p, q, w):
+    Hp = special.hermite(p, monic=False)
+    U = Hp(np.sqrt(2)*x/w)*np.exp(-(x**2)/w**2)
+    return U**2
+
+
+def TEMpq (x, y, p, q, w):
+    Hp = special.hermite(p, monic=False)
+    Hq = special.hermite(q, monic=False)
+    U = Hp(np.sqrt(2)*x/w)* Hq(np.sqrt(2)*y/w)*np.exp(-(x**2+y**2)/w**2)
+    return U**2
